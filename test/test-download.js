@@ -119,7 +119,7 @@ test('download headers (actual)', function (t) {
     return t.skip('Skipping acutal download of headers due to test environment configuration')
   }
 
-  t.plan(19)
+  t.plan(17)
 
   const expectedDir = path.join(devDir, process.version.replace(/^v/, ''))
   rimraf(expectedDir, (err) => {
@@ -157,20 +157,16 @@ test('download headers (actual)', function (t) {
 
         const lines = contents.split('\n')
 
-        // extract the 3 version parts from the defines and check them against our env version
-
+        // extract the 3 version parts from the defines to build a valid version string and
+        // and check them against our current env version
         const version = ['major', 'minor', 'patch'].reduce((version, type) => {
           const re = new RegExp(`^#define\\sNODE_${type.toUpperCase()}_VERSION`)
           const line = lines.find((l) => re.test(l))
-          if (line) {
-            version[type] = parseInt(line.replace(/^[^0-9]+([0-9]+).*$/, '$1'), 10)
-          }
-          return version
-        }, {})
+          const i = line ? parseInt(line.replace(/^[^0-9]+([0-9]+).*$/, '$1'), 10) : 'ERROR'
+          return `${version}${type !== 'major' ? '.' : 'v'}${i}`
+        }, '')
 
-        t.strictEqual(version.major, semver.major(process.version))
-        t.strictEqual(version.minor, semver.minor(process.version))
-        t.strictEqual(version.patch, semver.patch(process.version))
+        t.strictEqual(version, process.version)
       })
     })
   })
